@@ -8,7 +8,7 @@ Implementation of cluster simplification algorithm for IZP course
 3. `make`
 
 ### Valgrind
-Valgrind is used to check for memory leaks. To run it, use `make valgrind`.
+Valgrind is used to check for memory leaks. To run it, use `make valgrind`. To change the cluster count, add variable override `make CLUSTER_COUNT=10 valgrind`.
 
 ## Running
 #### Usage: `./cluster <filename> [<size>]`
@@ -64,4 +64,4 @@ Valgrind is used to check for memory leaks. To run it, use `make valgrind`.
 
 ## Testing
 Tested on both `merlin` and `eva` servers. This can be built on macOS, but `valgrind` will not work. Most work done in CLion connected to WSL Ubuntu 20.04.
-You can run tests on your machine by using `make test`.
+You can run tests on your machine by using `make test`. To test with Valgrind use `make test-valgrind`.
