@@ -6,8 +6,11 @@ VALGRIND_OPTIONS=--leak-check=full --leak-resolution=high
 
 default: all
 
-test: all
+test-valgrind: all
 	python3 ./test.py $(TARGET) --valgrind
+
+test: all
+	python3 ./test.py $(TARGET)
 
 valgrind: all
 	$(VALGRIND) $(VALGRIND_OPTIONS) ./$(TARGET) objekty 8
