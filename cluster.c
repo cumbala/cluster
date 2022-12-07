@@ -4,7 +4,7 @@
 /// Author: Konstantin Romanets, xroman18@stud.fit.vut.cz
 /// Date:   27.11.2022
 /// Desc:   Implementation of cluster.c file for IZP Project 2
-///         Additional functions: FreeClusters, IsFloat, IsNumber, DuplicateId, parse_obj
+///         Additional functions: FreeClusters, IsFloat, IsNumber, DuplicateId, ParseObject
 ///
 /// VUT FIT 2022
 /// @endcode
@@ -87,9 +87,11 @@ void init_cluster(struct cluster_t *c, int cap)
     assert(c != NULL);
     assert(cap >= 0);
 
+    // Set values
     c->size = 0;
     c->capacity = cap;
 
+    // If cap is not zero - alloc, otherwise it's going to be null anyway
     if (cap != 0)
         c->obj = malloc(cap * sizeof(struct obj_t));
 }
@@ -101,7 +103,9 @@ void clear_cluster(struct cluster_t *c)
 {
     assert(c != NULL);
 
+    // Free obj
     free(c->obj);
+    // Init as empty
     c->size = 0;
     c->capacity = 0;
 }
@@ -141,9 +145,11 @@ void append_cluster(struct cluster_t *c, struct obj_t obj)
 {
     assert(c != NULL);
 
+    // Only resize, when needed
     if (c->size >= c->capacity)
         c = resize_cluster(c, c->capacity + CLUSTER_CHUNK);
 
+    // Add to the last free position and increment size
     c->obj[c->size] = obj;
     c->size++;
 }
@@ -162,7 +168,7 @@ void merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
 {
     assert(c1 != NULL);
     assert(c2 != NULL);
-
+    
     for (int i = 0; i < c2->size; i++)
         append_cluster(c1, c2->obj[i]);
 
@@ -180,9 +186,11 @@ int remove_cluster(struct cluster_t *carr, int narr, int idx)
 {
     assert(idx < narr);
     assert(narr > 0);
-
+    
+    // Clear memory
     clear_cluster(&carr[idx]);
 
+    // Move everything to the left
     for (int i = idx; i < narr - 1; i++)
         carr[i] = carr[i + 1];
 
@@ -196,8 +204,8 @@ float obj_distance(struct obj_t *o1, struct obj_t *o2)
 {
     assert(o1 != NULL);
     assert(o2 != NULL);
-
-    return sqrtf(powf(o1->x - o2->x, 2) + powf(o1->y - o2->y, 2));
+    
+    return sqrtf(powf(o1->x - o2->x, 2.0f) + powf(o1->y - o2->y, 2.0f));
 }
 
 /*
@@ -210,8 +218,10 @@ float cluster_distance(struct cluster_t *c1, struct cluster_t *c2)
     assert(c2 != NULL);
     assert(c2->size > 0);
 
-    float min = obj_distance(&c1->obj[0], &c2->obj[0]);
+    // Set this to some big value
+    float min = INFINITY;
 
+    // Find the smallest distance
     for (int i = 0; i < c1->size; i++)
         for (int j = 0; j < c2->size; j++) {
             float dist = obj_distance(&c1->obj[i], &c2->obj[j]);
@@ -232,11 +242,17 @@ void find_neighbours(struct cluster_t *carr, int narr, int *c1, int *c2)
 {
     assert(narr > 0);
 
-    float min = cluster_distance(&carr[0], &carr[1]);
+    // Set this to some big value
+    float min = INFINITY;
 
+    // Precaution: if we never find the smallest distance
+    // then we are returning the first two clusters
+    // 
+    // Just like variable initialization
     *c1 = 0;
     *c2 = 1;
 
+    // Find the smallest distance
     for (int i = 0; i < narr; i++)
         for (int j = i + 1; j < narr; j++) {
             float dist = cluster_distance(&carr[i], &carr[j]);
@@ -286,9 +302,11 @@ void print_cluster(struct cluster_t *c)
 /// @param clusters Array of clusters
 /// @param n Number of clusters
 void FreeClusters(struct cluster_t *clusters, int n) {
+    // Free all objs in clusters
     for (int i = 0; i < n; i++) {
         clear_cluster(&clusters[i]);
     }
+    // And finally - the array itself
     free(clusters);
 }
 
@@ -334,7 +352,7 @@ int DuplicateId(struct cluster_t *clusters, int n) {
 /// @param x Parsed X coordinate
 /// @param y Parsed Y coordinate
 /// @return 0 on success, 1 on failure
-int parse_obj(char *str, int *id, float *x, float *y) {
+int ParseObject(char *str, int *id, float *x, float *y) {
     // Remove linebreaks
     str[strcspn(str, "\r\n")] = 0;
 
@@ -409,7 +427,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
         fgets(line, 100, file);
 
         // Parse it and return if line is not valid
-        if (parse_obj(line, &id, &x, &y) || (x < 0 || x > 1000) || (y < 0 || y > 1000)) {
+        if (ParseObject(line, &id, &x, &y) || (x < 0 || x > 1000) || (y < 0 || y > 1000)) {
             fprintf(stderr, "Error: Invalid file format.\nLine: %s.\n", line);
             FreeClusters(*arr, i);
             fclose(file);
@@ -426,6 +444,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
         (*arr)[i].size = 1;
     }
 
+    // Check for duplicates
     int dupl_id = DuplicateId(*arr, size);
     if(dupl_id != -1) {
         fprintf(stderr, "Error: Duplicate IDs: %d.\n", dupl_id);
@@ -455,7 +474,7 @@ void print_clusters(struct cluster_t *carr, int narr)
 int main(int argc, char *argv[])
 {
     // Clusters array
-    struct cluster_t *clusters;
+    struct cluster_t *clusters = NULL;
 
     // Invalid number of args
     if (argc > 3 || argc < 2) {
